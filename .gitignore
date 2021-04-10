@@ -1,0 +1,12 @@
+.ipynb_checkpoints
+__pycache__
+
+lena_512?*.png
+lena_256?*.png
+lena_128?*.png
+lena_64?*.png
+lena_32?*.png
+lena_16?*.png
+
+tmp*
+tmp*
