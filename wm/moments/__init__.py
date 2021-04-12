@@ -1,4 +1,4 @@
-from .Moment2D import Moment2D
+from ._RadialMoment import _RadialMoment
 #from .LegendreMoment import LegendreMoment
 from .RadialHarmonicFourierMoment import RadialHarmonicFourierMoment
 from .ZernikeMoment import ZernikeMoment

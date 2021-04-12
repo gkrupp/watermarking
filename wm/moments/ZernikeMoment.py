@@ -1,35 +1,31 @@
 import numpy as np
 
-from wm.Image import Image
-from wm.moments import Moment2D
+from ..Image import Image
+from ._RadialMoment import _RadialMoment
 
-class ZernikeMoment(Moment2D):
+class ZernikeMoment(_RadialMoment):
     
     def __init__(self, n_max, N=None, **kwargs):
         super().__init__(n_max, N or n_max, **kwargs)
         #
-        self.qs = kwargs.get('qs', 1.2)  # quantization step
-        self.encode_dir = kwargs.get('encode_dir', 'row')
-        self.encode_K = kwargs.get('encode_K', self.m_max)
+        self.RR = {}
     
     def __call__(self, f_o, n=None, m=None, verbose=False):
         if n is not None and m is not None:
             if not self._correct_nm(n, m):
                 return 0
-            A_norm = (n+1) / np.pi
-            A = 0
+            A_nm = 0
             for u in range(self.N):
                 for v in range(self.M):
-                    r, fi = f_o.pos_to_polar(u, v)
-                    if r > 1:
-                        continue
-                    A += f_o(r, fi) * self.h(n, m, r, fi)
-            return A_norm * A
+                    r, fi = self.pos_to_polar(u, v)
+                    if r > 1: continue
+                    A_nm += f_o(r, fi) * self.h(n, m, r, fi)
+            return ((n+1)/np.pi) * A_nm
         else:
-            A = self.momentum_mx((self.n_max, 2*self.m_max+1))
-            for n in range(self.n_max):
+            A = self.momentum_mx((self.n_max+1, self.m_max+1))
+            for n in range(self.n_max+1):
                 if verbose: print(''.join([str(n),'/',str(self.n_max)])+' '*32, end='\r')
-                for m in range(-self.m_max, self.m_max+1):
+                for m in range(self.m_max+1):
                     A[n,m] = self(f_o, n, m)
             return A
     
@@ -51,8 +47,27 @@ class ZernikeMoment(Moment2D):
             res += ((-1.)**s) * np.math.factorial(n-s) * (r**(n-2*s)) / denom
         return res
     
+    def R_r(self, r):
+        R = np.zeros((self.n_max+1,self.m_max+1))
+        R[0,0] = 1
+        R[1,1] = r
+        for n in range(2,self.n_max+1):
+            h = n * (n-1) * (n-2)
+            K2 = 2 * h
+            R[n,n] = r**n
+            R[n,n-2] = n*R[n,n] - (n-1)*R[n-2,n-2]
+            for m in range(n-4, -1, -2):
+                K1 = (n+m) * (n-m) * (n-2) / 2
+                K3 = (-1)*m*m*(n-1) - h
+                K4 = (-1) * n * (n+m-2) * (n-m-2) / 2
+                r2 = r**2
+                R[n,m] = ((K2*r2+K3)*R[n-2,m] + K4*R[n-4,m]) / K1
+        return R
+    
     def V(self, n, m, r, fi):
-        return self.R(n, m, r) * np.exp(1j*m*fi)
+        if r not in self.RR:
+            self.RR[r] = self.R_r(r)
+        return self.RR[r][n, m] * np.exp(1j*m*fi)
     
     def _correct_nm(self, n, m):
         m_abs = np.abs(m)
@@ -91,61 +106,6 @@ class ZernikeMoment(Moment2D):
                 pos_nm.append(self.moment_from_encode_pos(p))
         return pos_nm
     
-    def reconstruct(self, A, width, height=None, verbose=False):
-        height = height or width
-        colored = False
-        I = Image(np.zeros((width,height), dtype=np.uint8), colored=colored)
-        for u in range(width):
-            if verbose: print(''.join([str(u*height),'/',str(width*height)])+' '*32, end='\r')
-            for v in range(height):
-                r, fi = I.pos_to_polar(u, v)
-                if r > 1: continue
-                a = 0
-                for n in range(self.n_max):
-                    for m in range(-self.m_max, self.m_max+1):
-                        a += A[n,m] * self.V(n, m, r, fi)
-                I.im[u,v] = self.pxtype(a)
-        return Image(I.im, colored=colored)
-    
-    def encode(self, f_o, w=None, pos=None, verbose=False):
-        # choose moments to modify
-        pos_nm = self.moments_from_encode_poss( pos or len(w) )
-        # (P)ZMs
-        if verbose: print('1/4: moments'+' '*32, end='\r')
-        F = self(f_o, verbose=verbose)
-        # Reconstruction with unmodified RHFMs
-        if verbose: print('2/4: reconstruction'+' '*32, end='\r')
-        R = self.reconstruct(F, f_o.width, f_o.height, verbose=verbose).im
-        D = f_o.im - R
-        # modify
-        #if verbose: print('3/4: encoding'+' '*32, end='\r')
-        for k in range(len(w)):
-            (n, m) = pos_nm[k]
-            F_nm_abs = np.abs(F[n,m])
-            l_k = np.round(F_nm_abs / self.qs)
-            d = -1/2 if ((l_k + w[k]) % 2 == 1) else 1/2
-            F_nm_abs_mod = (l_k + d) * self.qs
-            F[n,m] = (F_nm_abs_mod / F_nm_abs) * F[n,m]
-            F[n,-m] = (F_nm_abs_mod / F_nm_abs) * F[n,-m]
-        # Reconstruction with modified RHFMs
-        if verbose: print('4/4: modified reconstruction'+' '*32, end='\r')
-        E = self.reconstruct(F, f_o.width, f_o.height, verbose=verbose).im
-        # Image combination
-        if verbose: print('done'+' '*32, end='\r')
-        return Image(E + D, colored=f_o.colored)
-    
-    def decode(self, f_o, pos=None, verbose=False):
-        # choose moments to decode
-        pos_nm = self.moments_from_encode_poss( pos ) # or ((self.n_max+self.m_max)//2) )
-        # Modified RHFMs
-        F = self(f_o, verbose=verbose)
-        # decode
-        w = []
-        for (n, m) in pos_nm:
-            F_nm_abs = np.abs(F[n,m])
-            l_k = np.floor(F_nm_abs / self.qs)
-            w_k = int(l_k % 2)
-            w.append(w_k)
-        if verbose: print('done'+' '*32, end='\r')
-        return w
+    def clearCache(self):
+        self.RR = {}
 #
