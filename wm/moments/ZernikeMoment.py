@@ -7,10 +7,15 @@ class ZernikeMoment(_RadialMoment):
     
     def __init__(self, n_max, N=None, **kwargs):
         super().__init__(n_max, N or n_max, **kwargs)
+        self.qs = kwargs.get('qs', 1)
+        self.encode_dir = kwargs.get('encode_dir', 'row')
+        self.name = 'ZM'
         #
         self.RR = {}
     
-    def __call__(self, f_o, n=None, m=None, verbose=False):
+    def __call__(self, f_o, n=None, m=None, pos_nm=None, selective=False, verbose=False):
+        
+        # single momentum
         if n is not None and m is not None:
             if not self._correct_nm(n, m):
                 return 0
@@ -21,8 +26,19 @@ class ZernikeMoment(_RadialMoment):
                     if r > 1: continue
                     A_nm += f_o(r, fi) * self.h(n, m, r, fi)
             return ((n+1)/np.pi) * A_nm
+        
+        # momentum list
+        elif selective:
+            A = []
+            for k in range(len(pos_nm)):
+                n, m = pos_nm[k]
+                if verbose: print(''.join([str(k),'/',str(len(pos_nm))])+' '*32, end='\r')
+                A.append( (n,m,self(f_o, n, m)) )
+            return A
+        
+        # momentum matrix
         else:
-            A = self.momentum_mx((self.n_max+1, self.m_max+1))
+            A = self.get_momentum_mx()
             for n in range(self.n_max+1):
                 if verbose: print(''.join([str(n),'/',str(self.n_max)])+' '*32, end='\r')
                 for m in range(self.m_max+1):
@@ -37,6 +53,10 @@ class ZernikeMoment(_RadialMoment):
     def R(self, n, m, r):
         if not self._correct_nm(n, m):
             return 0
+        # cache
+        if r not in self.RR:
+            self.RR[r] = self.R_r(r)
+        # slow computation
         res = 0
         m_abs = np.abs(m)
         for s in range((n-m_abs)//2+1):
@@ -65,9 +85,7 @@ class ZernikeMoment(_RadialMoment):
         return R
     
     def V(self, n, m, r, fi):
-        if r not in self.RR:
-            self.RR[r] = self.R_r(r)
-        return self.RR[r][n, m] * np.exp(1j*m*fi)
+        return self.R(n, m, r) * np.exp(1j*m*fi)
     
     def _correct_nm(self, n, m):
         m_abs = np.abs(m)

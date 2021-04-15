@@ -28,7 +28,7 @@ class Benchmark:
         return Image(np.array(im), self.colored)
     
     def decode(self, im) -> list:
-        return self.method.decode(im, self.pos)
+        return self.method.decode(im, pos=self.pos)
     
     def _perf(self, data_orig, data_tform) -> float:
         c = 0

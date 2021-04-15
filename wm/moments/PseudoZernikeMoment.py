@@ -6,6 +6,7 @@ class PseudoZernikeMoment(ZernikeMoment):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = 'PZM'
     
     def R(self, n, m, r):
         if not self._correct_nm(n, m):

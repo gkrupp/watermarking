@@ -13,7 +13,6 @@ class _RadialMoment:
         """
         self.dtype = kwargs.get('dtype', complex)
         self.pxtype = kwargs.get('dtype', np.real)
-        self.momentum_mx = kwargs.get('momenum_mx', lambda size: np.zeros(size, dtype=self.dtype))
         # N:sampling, M:sampling
         self.N = N or n_max
         self.M = M or self.N
@@ -29,7 +28,25 @@ class _RadialMoment:
     def __call__(self):
         raise NotImplementedError
     
-    def reconstruct(self, F, width, height=None, verbose=False):
+    def reconstruct_px(self, F, u, v, width=None, height=None, selective=True, verbose=False):
+        r, fi = self.pos_to_polar(u, v, width, height)
+        if r > 1: return 0
+        #
+        x = 0
+        if selective:
+            for (n,m,F_nm) in F:
+                x_nm = F_nm * self.V(n, m, r, fi)
+                if m: x_nm = 2*np.real(x_nm)
+                x += x_nm
+        else:
+            for n in range(F.shape[0]):
+                for m in range(F.shape[1]):
+                    x_nm = F[n,m] * self.V(n, m, r, fi)
+                    if m: x_nm = 2*np.real(x_nm)
+                    x += x_nm
+        return self.pxtype(x)
+    
+    def reconstruct(self, F, width, height=None, selective=True, verbose=False):
         """
         F: momentum matrix (n,m)
         width: image width
@@ -40,57 +57,77 @@ class _RadialMoment:
         for u in range(width):
             if verbose: print(str((u+1)*width)+'/'+str(width*height)+' '*32, end='\r')
             for v in range(height):
-                r, fi = self.pos_to_polar(u, v)
-                if r > 1: continue
-                x = 0
-                for n in range(F.shape[0]):
-                    for m in range(F.shape[1]):
-                        x_nm = F[n,m] * self.V(n, m, r, fi)
-                        if m: x_nm = 2*np.real(x_nm)
-                        x += x_nm
-                I.im[u,v] = self.pxtype(x)
+                I.im[u,v] = self.reconstruct_px(F, u, v, width, height, selective=selective)
         return Image(I.im, colored=False)
     
     ## Coding
     
-    def encode(self, f_o, w=None, pos=None, verbose=False):
+    def encode(self, f_o, w=None, pos=None, selective=True, verbose=False):
+        
         # choose moments to modify
         pos_nm = self.moments_from_encode_poss( pos or len(w) )
+        
         # compute moments
-        F = self(f_o, verbose=verbose)
+        F = self(f_o, pos_nm=pos_nm, selective=selective, verbose=verbose)
+        
         # Reconstruction with unmodified moments
-        R = self.reconstruct(F, f_o.width, f_o.height, verbose=verbose).im
+        R = self.reconstruct(F, f_o.width, f_o.height, selective=selective, verbose=verbose).im
+        
+        # Reconstruction error (difference)
         D = f_o.im - R
+        
         # modify
         for k in range(len(w)):
             (n, m) = pos_nm[k]
-            F_nm_abs = np.abs(F[n,m])
-            l_k = np.round(F_nm_abs / self.qs)
-            d = -1/2 if ((l_k + w[k]) % 2 == 1) else 1/2
-            F_nm_abs_mod = (l_k + d) * self.qs
-            F[n,m] = (F_nm_abs_mod / F_nm_abs) * F[n,m]
+            if selective:
+                F_nm_abs = np.abs(F[k][-1])
+                l_k = np.round(F_nm_abs / self.qs)
+                d = -1/2 if ((l_k + w[k]) % 2 == 1) else 1/2
+                F_nm_abs_mod = (l_k + d) * self.qs
+                F_nm_mod = (F_nm_abs_mod / F_nm_abs) * F[k][-1]
+                F[k] = (n, m, F_nm_mod)
+            else:
+                F_nm_abs = np.abs(F[n,m])
+                l_k = np.round(F_nm_abs / self.qs)
+                d = -1/2 if ((l_k + w[k]) % 2 == 1) else 1/2
+                F_nm_abs_mod = (l_k + d) * self.qs
+                F[n,m] = (F_nm_abs_mod / F_nm_abs) * F[n,m]
+        
         # Reconstruction with modified moments
-        E = self.reconstruct(F, f_o.width, f_o.height, verbose=verbose).im
+        E = self.reconstruct(F, f_o.width, f_o.height, selective=selective, verbose=verbose).im
+        
         # Image combination
         if verbose: print('done'+' '*32, end='\r')
         return Image(E + D, colored=f_o.colored)
     
-    def decode(self, f_o, pos=None, verbose=False):
+    def decode_moment(self, F_nm):
+        F_nm_abs = np.abs(F_nm)
+        l_nm = np.floor(F_nm_abs / self.qs)
+        w_nm = int(l_nm % 2)
+        return w_nm
+    
+    def decode(self, f_o, pos=None, selective=True, verbose=False):
+        
         # choose moments to decode
         pos_nm = self.moments_from_encode_poss( pos ) # or ((self.n_max+self.m_max)//2) )
+        
         # modified moments
-        F = self(f_o, verbose=verbose)
+        F = self(f_o, pos_nm=pos_nm, selective=selective, verbose=verbose)
+        
         # decode
-        w = []
-        for (n, m) in pos_nm:
-            F_nm_abs = np.abs(F[n,m])
-            l_k = np.floor(F_nm_abs / self.qs)
-            w_k = int(l_k % 2)
-            w.append(w_k)
+        if selective:
+            w = [ self.decode_moment(F[k][-1]) for k in range(len(pos_nm)) ]
+        else:
+            w = [ self.decode_moment(F[n][m]) for (n,m) in pos_nm ]
+        
+        # return
         if verbose: print('done'+' '*32, end='\r')
         return w
     
     ## Helpers
+    
+    def get_momentum_mx(self):
+        return np.zeros((self.n_max+1, self.m_max+1), dtype=self.dtype)
     
     def polar_uv(self, u, v):
         """
@@ -102,13 +139,15 @@ class _RadialMoment:
             2 * np.pi * (v / self.M)
         )
     
-    def pos_to_polar(self, x, y):
+    def pos_to_polar(self, x, y, N=None, M=None):
         """
         x: x coord
         y: y coord
         """
-        x_p = (2*x-self.N+1)/(self.N-1)
-        y_p = (2*y-self.M+1)/(self.M-1)
+        N = N or self.N
+        M = M or self.M
+        x_p = (2*x-N+1)/(N-1)
+        y_p = (2*y-M+1)/(M-1)
         return (
             np.sqrt((x_p*x_p)+(y_p*y_p)),
             np.arctan2(y_p, x_p)

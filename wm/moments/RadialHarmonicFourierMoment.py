@@ -8,12 +8,15 @@ class RadialHarmonicFourierMoment(_RadialMoment):
     
     def __init__(self, n_max, N=None, **kwargs):
         super().__init__(n_max, N or n_max, **kwargs)
+        self.qs = kwargs.get('qs', 0.3)
+        self.name = 'RHFM'
     
-    def __call__(self, f_o, n=None, m=None, F_g=None, verbose=False):
+    def __call__(self, f_o, n=None, m=None, F_g=None, pos_nm=None, selective=False, verbose=False):
         """
         f_o: polar image
         n, m: order, repetition
         F_g
+        pos: momentum indexes
         """
         if F_g is None:
             F_g = 1 / (self.N * self.M) * np.fft.fft2(self.G(f_o))
@@ -29,9 +32,13 @@ class RadialHarmonicFourierMoment(_RadialMoment):
                 k = (n + 1) // 2
                 return 1j * ( F_g[k,m] - F_g[-k,m] )
         
+        # momentum list
+        elif selective:
+            return [ (n,m,self(f_o, n, m, F_g)) for (n,m) in pos_nm ]
+        
         # momentum matrix
         else:
-            F = self.momentum_mx((self.n_max+1, self.m_max+1))
+            F = self.get_momentum_mx()
             for n in range(self.n_max+1):  # -> n
                 for m in range(self.m_max+1):  # -> m
                     F[n,m] = self(f_o, n, m, F_g)
