@@ -11,7 +11,7 @@ class ZernikeMoment(_RadialMoment):
         self.encode_dir = kwargs.get('encode_dir', 'row')
         self.name = 'ZM'
         #
-        self.RR = {}
+        self.R_table = {}
     
     def __call__(self, f_o, n=None, m=None, pos_nm=None, selective=False, verbose=False):
         
@@ -22,9 +22,9 @@ class ZernikeMoment(_RadialMoment):
             A_nm = 0
             for u in range(self.N):
                 for v in range(self.M):
-                    r, fi = self.pos_to_polar(u, v)
+                    r, fi = self.polar_r_fi[u,v]
                     if r > 1: continue
-                    A_nm += f_o(r, fi) * self.h(n, m, r, fi)
+                    A_nm += f_o(r,fi) * self.h(n, m, r, fi)
             return ((n+1)/np.pi) * A_nm
         
         # momentum list
@@ -46,28 +46,30 @@ class ZernikeMoment(_RadialMoment):
             return A
     
     def h(self, n, m, r, fi):
-        du = 2 / self.N
-        dv = 2 / self.M
-        return np.conjugate(self.V(n, m, r, fi)) * du * dv
+        #du = 2 / self.N
+        #dv = 2 / self.M
+        #return np.conjugate(self.V(n, m, r, fi)) * du * dv
+        return np.conjugate(self.V(n, m, r, fi)) * 4 / (self.N*self.M)
     
     def R(self, n, m, r):
         if not self._correct_nm(n, m):
             return 0
         # cache
-        if r not in self.RR:
-            self.RR[r] = self.R_r(r)
+        if r not in self.R_table:
+            self.R_table[r] = self.R_all(r)
+        return self.R_table[r][n,m]
         # slow computation
-        res = 0
-        m_abs = np.abs(m)
-        for s in range((n-m_abs)//2+1):
-            d0 = np.math.factorial(s)
-            d1 = np.math.factorial((n+m_abs)//2-s)
-            d2 = np.math.factorial((n-m_abs)//2-s)
-            denom = d0 * d1 * d2
-            res += ((-1.)**s) * np.math.factorial(n-s) * (r**(n-2*s)) / denom
-        return res
+        #res = 0
+        #m_abs = np.abs(m)
+        #for s in range((n-m_abs)//2+1):
+        #    d0 = np.math.factorial(s)
+        #    d1 = np.math.factorial((n+m_abs)//2-s)
+        #    d2 = np.math.factorial((n-m_abs)//2-s)
+        #    denom = d0 * d1 * d2
+        #    res += ((-1.)**s) * np.math.factorial(n-s) * (r**(n-2*s)) / denom
+        #return res
     
-    def R_r(self, r):
+    def R_all(self, r):
         R = np.zeros((self.n_max+1,self.m_max+1))
         R[0,0] = 1
         R[1,1] = r
@@ -123,7 +125,4 @@ class ZernikeMoment(_RadialMoment):
             else:
                 pos_nm.append(self.moment_from_encode_pos(p))
         return pos_nm
-    
-    def clearCache(self):
-        self.RR = {}
 #

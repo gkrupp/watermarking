@@ -24,12 +24,17 @@ class _RadialMoment:
         self.qs = kwargs.get('qs', 0.3)
         self.encode_dir = kwargs.get('encode_dir', 'diagonal')
         self.encode_K = kwargs.get('encode_K', self.m_max)
+        #
+        self.polar_r_fi  = np.zeros((self.N,self.M,2))
+        for u in range(self.N):
+            for v in range(self.M):
+                self.polar_r_fi[u,v] = self.pos_to_polar(u, v)
     
     def __call__(self):
         raise NotImplementedError
     
     def reconstruct_px(self, F, u, v, width=None, height=None, selective=True, verbose=False):
-        r, fi = self.pos_to_polar(u, v, width, height)
+        r, fi = self.polar_r_fi[u,v] #self.pos_to_polar(u, v, width, height)
         if r > 1: return 0
         #
         x = 0

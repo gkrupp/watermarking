@@ -68,8 +68,8 @@ class RadialHarmonicFourierMoment(_RadialMoment):
             mx = np.zeros((self.N,self.M), dtype=self.dtype)
             for u in range(self.N):  # -> F_{u,*}
                 for v in range(self.M):  # F_{*,v}
-                    (r_u, fi_v) = self.polar_uv(u, v)
-                    mx[u,v] = self.dtype(f_o(r_u, fi_v)) * np.sqrt(r_u/2)
+                    r, fi = self.polar_uv(u, v)
+                    mx[u,v] = self.dtype(f_o(r, fi)) * np.sqrt(r/2)
             return mx
     
     def moment_from_encode_pos(self, p):

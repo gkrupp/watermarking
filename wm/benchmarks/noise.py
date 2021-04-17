@@ -23,8 +23,8 @@ class Sharpen(Benchmark):
 #
 
 class SaltPapperNoise(Benchmark):
-    def __init__(self, *args, amount=0.001, salt=0.5, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, amount=0.001, salt=0.5, repeat=5, **kwargs):
+        super().__init__(*args, repeat=repeat, **kwargs)
         self.amount = amount
         self.salt = salt
     def transform(self, im) -> PILImage:

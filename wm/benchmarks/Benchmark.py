@@ -9,14 +9,18 @@ class Benchmark:
         self.method = method
         self.data = data
         self.name = kwargs.get('name', '')
+        self.repeat = kwargs.get('repeat', 1)
         self.colored = kwargs.get('colored', False)
         self.pos = kwargs.get('pos', None)
     
     def __call__(self, im) -> float:
-        tformed = self.transform(im)
-        pim = self.to_polar(tformed)
-        data_tform = self.decode(pim)
-        return self._perf(self.data, data_tform)
+        perf_sum = 0
+        for k in range(self.repeat):
+            tformed = self.transform(im)
+            pim = self.to_polar(tformed)
+            data_tform = self.decode(pim)
+            perf_sum += self._perf(self.data, data_tform)
+        return perf_sum / self.repeat
     
     def transform(self, im) -> PILImage:
         return copy.deepcopy(im)
