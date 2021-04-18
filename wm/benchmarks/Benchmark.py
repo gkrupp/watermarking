@@ -8,7 +8,7 @@ class Benchmark:
     def __init__(self, method, data, **kwargs):
         self.method = method
         self.data = data
-        self.name = kwargs.get('name', '')
+        self.name = kwargs.get('name', self.__class__.__name__)
         self.repeat = kwargs.get('repeat', 1)
         self.colored = kwargs.get('colored', False)
         self.pos = kwargs.get('pos', None)
@@ -20,10 +20,14 @@ class Benchmark:
             pim = self.to_polar(tformed)
             data_tform = self.decode(pim)
             perf_sum += self._perf(self.data, data_tform)
+            self.cleanup()
         return perf_sum / self.repeat
     
     def transform(self, im) -> PILImage:
         return copy.deepcopy(im)
+    
+    def cleanup(self) -> None:
+        return None
     
     def to_PIL(self, pim) -> PILImage:
         return PILImage.fromarray(pim.im)

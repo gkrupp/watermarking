@@ -1,6 +1,8 @@
 from .Benchmark import Benchmark
 from .. import Image
 from PIL import Image as PILImage
+
+import os
 import numpy as np
 
 
@@ -13,6 +15,8 @@ class JPEG(Benchmark):
     def transform(self, im) -> PILImage:
         im.save(self.tmpfile, quality=self.quality, optimize=self.optimize)
         return PILImage.open(self.tmpfile)
+    def cleanup(self):
+        os.remove(self.tmpfile)
 #
 
 class JPEG2000(Benchmark):
@@ -22,4 +26,6 @@ class JPEG2000(Benchmark):
     def transform(self, im) -> PILImage:
         im.save(self.tmpfile)
         return PILImage.open(self.tmpfile)
+    def cleanup(self):
+        os.remove(self.tmpfile)
 #

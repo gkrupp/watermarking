@@ -9,7 +9,7 @@ class Image:
     def __init__(self, image, colored=True, circle_radius=1):
         
         # load
-        self.im  = cv2.imread(image, cv2.IMREAD_COLOR if colored else cv2.IMREAD_GREY) if isinstance(image, str) else image
+        self.im  = cv2.imread(image, cv2.IMREAD_COLOR if colored else cv2.IMREAD_GRAYSCALE) if isinstance(image, str) else image
         self.colored = colored
         if colored:
             self.im = cv2.cvtColor(self.im, cv2.COLOR_BGR2RGB)

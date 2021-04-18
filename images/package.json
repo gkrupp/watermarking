@@ -1,0 +1,15 @@
+{
+  "name": "wm-images",
+  "version": "1.0.0",
+  "description": "Pregenerate images for benchmarking",
+  "main": "imgen.js",
+  "scripts": {
+		"imgen": "node imgen.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "gkrupp",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "sharp": "^0.28.1"
+  }
+}
