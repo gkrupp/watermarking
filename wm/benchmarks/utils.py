@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from PIL import Image
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 from .. import Image as PolarImage
 
 
@@ -27,7 +27,7 @@ class ConsistentRandomBits:
 #
 
 def execute_bs(imName, imPath, method, L, data, pos, bs_, k):
-    print(' '.join([imName, str(L), str(k)])+'\n', end='')
+    print('\t'.join([imName, str(L), str(k)])+'\n', end='')
     ret = {
         'im': imName,
         'L': L,
@@ -41,11 +41,11 @@ def execute_bs(imName, imPath, method, L, data, pos, bs_, k):
         ret[b.name] = b(ime)
     return ret
 
-def run(method, images, Ls, repetitions, gen_bs, imPath='../images/monochrome/'):
+def run(method, images, Ls, repetitions, gen_bs, imDir='../images/monochrome/'):
     CRB = ConsistentRandomBits(Ls, repetitions=repetitions)
     calls = []
     for imName in images:
-        imPath = imPath + imName + '.png'
+        imPath = imDir + imName + '.png'
         pim = PolarImage(imPath, colored=False)
         im = Image.fromarray(pim.im)
         for L in Ls:
@@ -57,7 +57,7 @@ def run(method, images, Ls, repetitions, gen_bs, imPath='../images/monochrome/')
                 calls.append(
                     (imName, imPath, method, L, data, pos, bs_, k)
                 )
-    with Pool(4) as p:
+    with Pool(cpu_count()) as p:
         res = p.starmap(execute_bs, calls)
     df = pd.DataFrame(res)
     return df

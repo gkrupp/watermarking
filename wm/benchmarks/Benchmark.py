@@ -39,6 +39,8 @@ class Benchmark:
         return self.method.decode(im, pos=self.pos)
     
     def _perf(self, data_orig, data_tform) -> float:
+        if len(data_orig) == 0:
+            return 1
         c = 0
         for i in range(min(len(data_orig),len(data_tform))):
             if data_orig[i] == data_tform[i]:
