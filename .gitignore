@@ -9,4 +9,4 @@ lena_64?*.png
 lena_32?*.png
 lena_16?*.png
 
-tmp*
+*.h5

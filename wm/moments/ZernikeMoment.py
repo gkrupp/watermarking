@@ -20,11 +20,17 @@ class ZernikeMoment(_RadialMoment):
             if not self._correct_nm(n, m):
                 return 0
             A_nm = 0
+            dxdy = 4 / (self.N * self.M)
             for u in range(self.N):
                 for v in range(self.M):
-                    r, fi = self.polar_r_fi[u,v]
-                    if r > 1: continue
-                    A_nm += f_o(r,fi) * self.h(n, m, r, fi)
+                    if self.Vmx is not None:
+                        r, fi = self.polar_r_fi[u,v]
+                        if r > 1: continue
+                        A_nm += f_o(r,fi) * np.conjugate(self.Vmx[n,m,u,v]) * dxdy
+                    else:
+                        r, fi = self.polar_r_fi[u,v]
+                        if r > 1: continue
+                        A_nm += f_o(r,fi) * np.conjugate(self.V(n, m, r, fi)) * dxdy
             return ((n+1)/np.pi) * A_nm
         
         # momentum list
@@ -44,12 +50,6 @@ class ZernikeMoment(_RadialMoment):
                 for m in range(self.m_max+1):
                     A[n,m] = self(f_o, n, m)
             return A
-    
-    def h(self, n, m, r, fi):
-        #du = 2 / self.N
-        #dv = 2 / self.M
-        #return np.conjugate(self.V(n, m, r, fi)) * du * dv
-        return np.conjugate(self.V(n, m, r, fi)) * 4 / (self.N*self.M)
     
     def R(self, n, m, r):
         if not self._correct_nm(n, m):

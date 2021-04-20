@@ -1,3 +1,5 @@
+import gc
+import h5py
 import numpy as np
 
 from ..Image import Image
@@ -29,6 +31,10 @@ class _RadialMoment:
         for u in range(self.N):
             for v in range(self.M):
                 self.polar_r_fi[u,v] = self.pos_to_polar(u, v)
+        self.Vmx = kwargs.get('Vmx', None)
+        if kwargs.get('Vfile', None) is not None:
+            with h5py.File(kwargs['Vfile'], 'r') as hf:
+                self.Vmx = hf['V'][:]
     
     def __call__(self):
         raise NotImplementedError
@@ -40,9 +46,14 @@ class _RadialMoment:
         x = 0
         if selective:
             for (n,m,F_nm) in F:
-                x_nm = F_nm * self.V(n, m, r, fi)
-                if m: x_nm = 2*np.real(x_nm)
-                x += x_nm
+                if self.Vmx is not None:
+                    x_nm = F_nm * self.Vmx[n,m,u,v]
+                    if m: x_nm = 2*np.real(x_nm)
+                    x += x_nm
+                else:
+                    x_nm = F_nm * self.V(n, m, r, fi)
+                    if m: x_nm = 2*np.real(x_nm)
+                    x += x_nm
         else:
             for n in range(F.shape[0]):
                 for m in range(F.shape[1]):
@@ -133,6 +144,11 @@ class _RadialMoment:
     
     def get_momentum_mx(self):
         return np.zeros((self.n_max+1, self.m_max+1), dtype=self.dtype)
+    
+    def unloadVfile(self):
+        del self.Vmx
+        self.Vmx = None
+        gc.collect()
     
     def polar_uv(self, u, v):
         """

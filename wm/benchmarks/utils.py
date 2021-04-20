@@ -41,7 +41,7 @@ def execute_bs(imName, imPath, method, L, data, pos, bs_, k):
         ret[b.name] = b(ime)
     return ret
 
-def run(method, images, Ls, repetitions, gen_bs, imDir='../images/monochrome/'):
+def run(method, images, Ls, repetitions, gen_bs, imDir='../images/monochrome/', multiproc=True):
     CRB = ConsistentRandomBits(Ls, repetitions=repetitions)
     calls = []
     for imName in images:
@@ -57,8 +57,12 @@ def run(method, images, Ls, repetitions, gen_bs, imDir='../images/monochrome/'):
                 calls.append(
                     (imName, imPath, method, L, data, pos, bs_, k)
                 )
-    with Pool(cpu_count()) as p:
-        res = p.starmap(execute_bs, calls)
+    if multiproc:
+        with Pool(cpu_count()) as p:
+            res = p.starmap(execute_bs, calls, chunksize=1)
+    else:
+        res = [ execute_bs(*call) for call in calls ]
+    res = [ item for sublist in res for item in sublist ]
     df = pd.DataFrame(res)
     return df
 #
