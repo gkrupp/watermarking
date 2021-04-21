@@ -26,8 +26,8 @@ class ConsistentRandomBits:
         return True
 #
 
-def execute_bs(imName, imPath, method, L, data, pos, bs_, k):
-    print('\t'.join([imName, str(L), str(k)])+'\n', end='')
+def execute_bs(imName, imPath, method, L, data, pos, bs_, k, verbose=True):
+    if verbose: print('\t'.join([imName, str(L), str(k)])+'\n', end='')
     ret = {
         'im': imName,
         'L': L,
@@ -61,8 +61,11 @@ def run(method, images, Ls, repetitions, gen_bs, imDir='../images/monochrome/', 
         with Pool(cpu_count()) as p:
             res = p.starmap(execute_bs, calls, chunksize=1)
     else:
-        res = [ execute_bs(*call) for call in calls ]
-    res = [ item for sublist in res for item in sublist ]
+        res = []
+        for call in calls:
+            ret = execute_bs(*call, verbose=False)
+            print(ret)
+            res.append(ret)
     df = pd.DataFrame(res)
     return df
 #

@@ -44,16 +44,25 @@ def gen_bs(method, data, pos, im):
     ], [])
 
 parser = argparse.ArgumentParser()
+parser.add_argument('m', metavar='m', type=str)
 parser.add_argument('a', metavar='a', type=int)
 parser.add_argument('b', metavar='b', type=int)
 args = parser.parse_args()
 
-max_L_exp = 32
+max_L_exp = 16
 max_order = 50
-method = RadialHarmonicFourierMoment(max_order, W, Vfile='../V_RHFM_256.h5')
 Ls = [ 8*l for l in range(max_L_exp+1) ]
-repetitions = 10
+repetitions = 5
+
+if args.m == 'RHFM':
+    method = RadialHarmonicFourierMoment(max_order, W, Vfile='../V_RHFM_256.h5')
+elif args.m == 'ZM':
+    method = ZernikeMoment(max_order, W, Vfile='../V_ZM_256.h5')
+elif args.m == 'PZM':
+    method = PseudoZernikeMoment(max_order, W, Vfile='../V_PZM_256.h5')
+else:
+    method = None
 
 df = run(method, images[args.a:args.b], Ls, repetitions, gen_bs, '../images/monochrome/', multiproc=False)
 
-df.to_csv('RHFM_'+str(args.a)+str(args.b)+'.csv')
+df.to_csv(str(method.name)+'_'+str(args.a)+str(args.b)+'.csv')
