@@ -122,7 +122,8 @@ class _RadialMoment:
         
         # Image combination
         if verbose: print('done'+' '*32, end='\r')
-        return Image(E + D, colored=f_o.colored)
+        I = (E+D).astype(self.pxtype)
+        return Image(I, colored=f_o.colored)
     
     def decode_moment(self, F_nm):
         F_nm_abs = np.abs(F_nm)

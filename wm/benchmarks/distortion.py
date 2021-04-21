@@ -9,23 +9,23 @@ import numpy as np
 class MSE(Benchmark):
     def __init__(self, *args, original=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.original = np.array(original)
+        self.original = np.array(original).astype(np.uint8)
     def __call__(self, im) -> float:
-        return MSE_metric(self.original, np.array(im))
+        return MSE_metric(self.original, np.array(im).astype(np.uint8))
 #
 
 class SNR(Benchmark):
     def __init__(self, *args, original=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.original = np.array(original)
+        self.original = np.array(original).astype(np.uint8)
     def __call__(self, im) -> float:
-        return SNR_metric(self.original, np.array(im))
+        return SNR_metric(self.original, np.array(im).astype(np.uint8))
 #
 
 class PSNR(Benchmark):
     def __init__(self, *args, original=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.original = np.array(original)
+        self.original = np.array(original).astype(np.uint8)
     def __call__(self, im) -> float:
-        return PSNR_metric(self.original, np.array(im))
+        return PSNR_metric(self.original, np.array(im).astype(np.uint8))
 #
