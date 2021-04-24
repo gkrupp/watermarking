@@ -20,4 +20,8 @@ class PseudoZernikeMoment(ZernikeMoment):
             denom = d0 * d1 * d2
             res += ((-1.)**s) * np.math.factorial(2*n+1-s) * (r**(n-s)) / denom
         return res
+    
+    def _correct_nm(self, n, m):
+        m_abs = np.abs(m)
+        return (m_abs <= n)
 #

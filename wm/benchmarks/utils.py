@@ -31,7 +31,8 @@ def execute_bs(imName, imPath, method, L, data, pos, bs_, k, verbose=True):
     ret = {
         'im': imName,
         'L': L,
-        'k': k
+        'k': k,
+        'qs': method.qs
     }
     pim = PolarImage(imPath, colored=False)
     im = Image.fromarray(pim.im)

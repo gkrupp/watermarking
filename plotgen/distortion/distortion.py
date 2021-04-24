@@ -65,4 +65,4 @@ else:
 
 df = run(method, images[args.a:args.b], Ls, repetitions, gen_bs, '../images/monochrome/', multiproc=False)
 
-df.to_csv(str(method.name)+'_'+str(args.a)+str(args.b)+'.csv')
+df.to_csv(str(method.name)+'_'+str(args.a)+str(args.b)+'.csv', index=False)
