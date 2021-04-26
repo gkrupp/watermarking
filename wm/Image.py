@@ -1,6 +1,7 @@
 import cv2
 import scipy
 import numpy as np
+from PIL import Image as PILImage
 from matplotlib import pyplot as plt
 from scipy import ndimage, interpolate
 
@@ -47,7 +48,6 @@ class Image:
         self.default_dtype = np.float32
         self.default_interpolation_order = 1
         self.default_array = self.circle
-        
     
     
     def __getitem__(self, index):
@@ -111,17 +111,25 @@ class Image:
     
     
     def show(self):
-        self.__show(self.im, self.colored)
+        return self.__show(self.im, self.colored)
     
     def show_unit(self):
-        self.__show(self.unit, self.colored)
+        return self.__show(self.unit, self.colored)
     
     def show_circle(self):
-        self.__show(self.circle, self.colored)
+        return self.__show(self.circle, self.colored)
     
     def __show(self, im, colored=True):
         plt.axis('off')
         if self.colored: plt.imshow(im, vmin=0, vmax=255)
         else: plt.imshow(im, cmap='gray', vmin=0, vmax=255)
-        plt.show()
+        return plt.show()
+    
+    
+    def save(self, filename):
+        return self.__save(self.im, filename)
+    
+    def __save(self, im, filename):
+        image = PILImage.fromarray(im)
+        return image.save(filename)
         

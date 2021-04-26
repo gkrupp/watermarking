@@ -5,15 +5,20 @@ from ._RadialMoment import _RadialMoment
 
 class ZernikeMoment(_RadialMoment):
     
+    name = 'ZM'
+    
     def __init__(self, n_max, N=None, **kwargs):
         super().__init__(n_max, N or n_max, **kwargs)
-        self.qs = kwargs.get('qs', 1)
+        self.qs = kwargs.get('qs', 1.35)
         self.encode_dir = kwargs.get('encode_dir', 'row')
         self.name = 'ZM'
         #
         self.R_table = {}
     
-    def __call__(self, f_o, n=None, m=None, pos_nm=None, selective=False, verbose=False):
+    def __call__(self, f_o, n=None, m=None, pos_nm=None, selective=False, imgrid=None, verbose=False):
+        
+        if imgrid is None:
+            imgrid = self.imgrid(f_o)
         
         # single momentum
         if n is not None and m is not None:
@@ -21,25 +26,25 @@ class ZernikeMoment(_RadialMoment):
                 return 0
             A_nm = 0
             dxdy = 4 / (self.N * self.M)
-            for u in range(self.N):
-                for v in range(self.M):
-                    if self.Vmx is not None:
+            if self.Vmx is not None:
+                A_nm += np.sum(imgrid * np.conjugate(self.Vmx[n,m,:,:])) * dxdy
+            else:
+                print('oops')
+                for u in range(self.N):
+                    for v in range(self.M):
+                        if imgrid[u,v] == 0: continue
                         r, fi = self.polar_r_fi[u,v]
-                        if r > 1: continue
-                        A_nm += f_o(r,fi) * np.conjugate(self.Vmx[n,m,u,v]) * dxdy
-                    else:
-                        r, fi = self.polar_r_fi[u,v]
-                        if r > 1: continue
-                        A_nm += f_o(r,fi) * np.conjugate(self.V(n, m, r, fi)) * dxdy
+                        A_nm += imgrid[u,v] * np.conjugate(self.V(n, m, r, fi)) * dxdy
             return ((n+1)/np.pi) * A_nm
         
         # momentum list
         elif selective:
             A = []
+            imgrid = self.imgrid(f_o)
             for k in range(len(pos_nm)):
                 n, m = pos_nm[k]
                 if verbose: print(''.join([str(k),'/',str(len(pos_nm))])+' '*32, end='\r')
-                A.append( (n,m,self(f_o, n, m)) )
+                A.append( (n,m,self(f_o, n, m, imgrid=imgrid)) )
             return A
         
         # momentum matrix
@@ -48,7 +53,7 @@ class ZernikeMoment(_RadialMoment):
             for n in range(self.n_max+1):
                 if verbose: print(''.join([str(n),'/',str(self.n_max)])+' '*32, end='\r')
                 for m in range(self.m_max+1):
-                    A[n,m] = self(f_o, n, m)
+                    A[n,m] = self(f_o, n, m, imgrid=imgrid)
             return A
     
     def R(self, n, m, r):

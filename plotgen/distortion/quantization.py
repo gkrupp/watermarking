@@ -50,7 +50,7 @@ args = parser.parse_args()
 
 max_L_exp = 16
 max_order = 50
-Ls = [ 64 ]
+Ls = [ 128 ]
 repetitions = 5
 
 if args.m == 'RHFM':

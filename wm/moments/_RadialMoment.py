@@ -182,4 +182,12 @@ class _RadialMoment:
             np.sqrt((x_p*x_p)+(y_p*y_p)),
             np.arctan2(y_p, x_p)
         )
+    
+    def imgrid(self, f_o):
+        imgrid = np.zeros((self.N,self.M), dtype='float32')
+        for u in range(self.N):
+            for v in range(self.M):
+                r, fi = self.polar_r_fi[u,v]
+                imgrid[u,v] = f_o(r,fi) if r <= 1 else 0
+        return imgrid
 ##

@@ -6,6 +6,8 @@ from ._RadialMoment import _RadialMoment
 
 class RadialHarmonicFourierMoment(_RadialMoment):
     
+    name = 'RHFM'
+    
     def __init__(self, n_max, N=None, **kwargs):
         super().__init__(n_max, N or n_max, **kwargs)
         self.qs = kwargs.get('qs', 0.3)
