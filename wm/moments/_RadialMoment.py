@@ -184,6 +184,8 @@ class _RadialMoment:
         )
     
     def imgrid(self, f_o):
+        if hasattr(f_o, 'circle') and f_o.width == self.N and f_o.height == self.M:
+            return f_o.circle
         imgrid = np.zeros((self.N,self.M), dtype='float32')
         for u in range(self.N):
             for v in range(self.M):

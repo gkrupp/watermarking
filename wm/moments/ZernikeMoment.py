@@ -29,7 +29,6 @@ class ZernikeMoment(_RadialMoment):
             if self.Vmx is not None:
                 A_nm += np.sum(imgrid * np.conjugate(self.Vmx[n,m,:,:])) * dxdy
             else:
-                print('oops')
                 for u in range(self.N):
                     for v in range(self.M):
                         if imgrid[u,v] == 0: continue

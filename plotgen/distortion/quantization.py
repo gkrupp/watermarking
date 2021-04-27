@@ -45,12 +45,13 @@ def gen_bs(method, data, pos, im):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('m', metavar='m', type=str)
+parser.add_argument('L', metavar='L', type=int)
 parser.add_argument('qs', metavar='qs', type=float)
 args = parser.parse_args()
 
 max_L_exp = 16
 max_order = 50
-Ls = [ 128 ]
+Ls = [ args.L ]
 repetitions = 5
 
 if args.m == 'RHFM':
