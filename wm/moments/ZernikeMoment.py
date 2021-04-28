@@ -9,7 +9,7 @@ class ZernikeMoment(_RadialMoment):
     
     def __init__(self, n_max, N=None, **kwargs):
         super().__init__(n_max, N or n_max, **kwargs)
-        self.qs = kwargs.get('qs', 1.35)
+        self.qs = kwargs.get('qs', 1.05)
         self.encode_dir = kwargs.get('encode_dir', 'row')
         self.name = 'ZM'
         #

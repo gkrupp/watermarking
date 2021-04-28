@@ -8,7 +8,7 @@ class PseudoZernikeMoment(ZernikeMoment):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.qs = kwargs.get('qs', 1.2)
+        self.qs = kwargs.get('qs', 0.925)
         self.name = 'PZM'
     
     def R(self, n, m, r):

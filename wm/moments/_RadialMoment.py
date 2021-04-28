@@ -62,7 +62,7 @@ class _RadialMoment:
                     x += x_nm
         if pxtype:
             if x < 0: return self.pxtype(0)
-            elif x < 256: return self.pxtype(x)
+            elif x < 255: return self.pxtype(np.round(x))
             else: return self.pxtype(255)
         else:
             return x
