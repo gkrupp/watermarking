@@ -74,7 +74,7 @@ class _RadialMoment:
         height: image height
         """
         height = height or width
-        I = np.zeros((width,height), dtype=(np.pxtype if pxtype else np.float32))
+        I = np.zeros((width,height), dtype=(self.pxtype if pxtype else np.float32))
         for u in range(width):
             if verbose: print(str((u+1)*width)+'/'+str(width*height)+' '*32, end='\r')
             for v in range(height):

@@ -12,19 +12,26 @@ class RadialHarmonicFourierMoment(_RadialMoment):
         super().__init__(n_max, N or n_max, **kwargs)
         self.qs = kwargs.get('qs', 0.2)
         self.name = 'RHFM'
+        self.encode_K = kwargs.get('encode_K', self.m_max//2)
     
-    def __call__(self, f_o, n=None, m=None, F_g=None, pos_nm=None, selective=False, verbose=False):
+    def __call__(self, f_o, n=None, m=None, F_g=None, pos_nm=None, selective=False, imgrid=None, verbose=False):
         """
         f_o: polar image
         n, m: order, repetition
         F_g
         pos: momentum indexes
         """
-        if F_g is None:
+        if F_g is None:# and self.Vmx is None:#####
             F_g = 1 / (self.N * self.M) * np.fft.fft2(self.G(f_o))
         
         # single momentum
         if (n is not None) and (m is not None):
+            # use precomputed matrix
+            if self.Vmx is not None and False:#####
+                if imgrid is None:
+                    imgrid = self.imgrid(f_o)
+                return 1 / (self.N * self.M) * np.sum(imgrid * self.polar_r_fi[:,:,0] * np.conjugate(self.Vmx[n,m,:,:]))
+            # use fft
             if n == 0:
                 return np.sqrt(2) * F_g[0,m]
             if n > 0 and n % 2 == 0:
@@ -36,7 +43,11 @@ class RadialHarmonicFourierMoment(_RadialMoment):
         
         # momentum list
         elif selective:
-            return [ (n,m,self(f_o, n, m, F_g)) for (n,m) in pos_nm ]
+            if self.Vmx is not None and False:#####
+                imgrid = self.imgrid(f_o)
+                return [ (n,m,self(f_o, n, m, imgrid=imgrid)) for (n,m) in pos_nm ]
+            else:
+                return [ (n,m,self(f_o, n, m, F_g)) for (n,m) in pos_nm ]
         
         # momentum matrix
         else:
@@ -54,10 +65,20 @@ class RadialHarmonicFourierMoment(_RadialMoment):
         if r == 0: return 0
         if n == 0: return np.sqrt(1/r)
         elif n % 2 == 1: return np.sqrt(2/r) * np.sin( (n+1)*np.pi*r )
-        else: return np.sqrt(2/r) * np.cos(n*np.pi*r)
+        else: return np.sqrt(2/r) * np.cos( n*np.pi*r )
     
-    def V(self, n, m, r, fi):
-        return self.T(n, r) * np.exp(1j*m*fi)
+    def H(self, n, r):
+        """
+        n: radial index
+        r: radius
+        """
+        if n == 0: return np.sqrt(r)
+        elif n % 2 == 1: return np.sqrt(2*r) * np.sin( (n+1)*np.pi*r )
+        else: return np.sqrt(2*r) * np.cos( n*np.pi*r )
+    
+    def V(self, n, m, r, fi, useH=False):
+        if useH: return self.H(n, r) * np.exp(1j*m*fi)
+        else: return self.T(n, r) * np.exp(1j*m*fi)
     
     def G(self, f_o, r_u=None, fi_v=None):
         """
