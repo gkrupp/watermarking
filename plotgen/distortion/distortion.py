@@ -49,7 +49,7 @@ parser.add_argument('a', metavar='a', type=int)
 parser.add_argument('b', metavar='b', type=int)
 args = parser.parse_args()
 
-max_L_exp = 16
+max_L_exp = 32
 max_order = 50
 Ls = [ 8*l for l in range(max_L_exp+1) ]
 repetitions = 5

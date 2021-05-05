@@ -55,26 +55,28 @@ class ZernikeMoment(_RadialMoment):
                     A[n,m] = self(f_o, n, m, imgrid=imgrid)
             return A
     
-    def R(self, n, m, r):
+    def R(self, n, m, r, kintner=True):
         if not self._correct_nm(n, m):
             return 0
-        # cache
-        if r not in self.R_table:
-            self.R_table[r] = self.R_all(r)
-        return self.R_table[r][n,m]
+        # Kintner's gets unstable above n,m>34
+        if kintner:
+            # cache
+            if r not in self.R_table:
+                self.R_table[r] = self.R_kintner(r)
+            return self.R_table[r][n,m]
         # slow computation
-        #res = 0
-        #m_abs = np.abs(m)
-        #for s in range((n-m_abs)//2+1):
-        #    d0 = np.math.factorial(s)
-        #    d1 = np.math.factorial((n+m_abs)//2-s)
-        #    d2 = np.math.factorial((n-m_abs)//2-s)
-        #    denom = d0 * d1 * d2
-        #    res += ((-1.)**s) * np.math.factorial(n-s) * (r**(n-2*s)) / denom
-        #return res
+        res = 0.0
+        m_abs = int(abs(m))
+        for s in range((n-m_abs)//2+1):
+            d0 = np.math.factorial(s)
+            d1 = np.math.factorial((n+m_abs)//2-s)
+            d2 = np.math.factorial((n-m_abs)//2-s)
+            denom = d0 * d1 * d2
+            res += ((-1.)**s) * np.math.factorial(n-s) * (r**(n-2*s)) / denom
+        return res
     
-    def R_all(self, r):
-        R = np.zeros((self.n_max+1,self.m_max+1))
+    def R_kintner(self, r):
+        R = np.zeros((self.n_max+1,self.m_max+1),dtype=np.float32)
         R[0,0] = 1
         R[1,1] = r
         for n in range(2,self.n_max+1):

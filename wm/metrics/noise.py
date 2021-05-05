@@ -7,7 +7,7 @@ def MSE(X, Y):
 
 def SNR(X, Y):
     w, h = X.shape[:2]
-    return 1/(w*h) * np.sum(X**2) / MSE(X, Y)
+    return 10 * np.log10( 1/(w*h) * np.sum(X**2) / MSE(X, Y) )
 
 def PSNR(X, Y, X_max=255):
     if X_max is None:
