@@ -54,7 +54,7 @@ def gen_bs(method, data, pos, im):
     bs_blur_5 = [ Blur(method, data, pos=pos, size=(5,5), sigma=s, name='Blur/5x5/'+str(s)) for s in blurs ]
     bs_blur_7 = [ Blur(method, data, pos=pos, size=(7,7), sigma=s, name='Blur/7x7/'+str(s)) for s in blurs ]
     # SHARPEN
-    sharpens = [ 2, 2.2, 2.4, 2.6, 2.8, 3, 3.2, 3.4, 3.6, 3.8, 4, 4.2, 4.4, 4.6, 4.8, 5 ]
+    sharpens = [ 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 4.8, 5.0 ]
     bs_sharpen_3 = [ Sharpen(method, data, pos=pos, size=(3,3), sigma=2, ratio=r, name='Sharpen/3x3/'+str(r)) for r in sharpens ]
     bs_sharpen_5 = [ Sharpen(method, data, pos=pos, size=(5,5), sigma=2, ratio=r, name='Sharpen/5x5/'+str(r)) for r in sharpens ]
     bs_sharpen_7 = [ Sharpen(method, data, pos=pos, size=(7,7), sigma=2, ratio=r, name='Sharpen/7x7/'+str(r)) for r in sharpens ]

@@ -16,7 +16,7 @@ class Blur(Benchmark):
 #
 
 class Sharpen(Benchmark):
-    def __init__(self, *args, size=0, sigma=0, ratio=1, **kwargs):
+    def __init__(self, *args, size=0, sigma=0, ratio=1.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.size = size
         self.sigma = sigma
