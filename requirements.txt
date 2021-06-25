@@ -3,3 +3,5 @@ python-opencv
 matplotlib
 scipy
 pillow
+h5py
+pandas

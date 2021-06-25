@@ -2,7 +2,6 @@ import os, sys
 sys.path.append(os.path.abspath('..'))
 
 import numpy as np
-import pandas as pd
 from wm import Image as PolarImage
 from PIL import Image
 
